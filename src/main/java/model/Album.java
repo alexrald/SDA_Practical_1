@@ -24,6 +24,9 @@ public class Album {
         this.artist = artist;
     }
 
+    public Album() {
+    }
+
     public int getIdAlbum() {
         return idAlbum;
     }

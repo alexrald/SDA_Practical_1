@@ -1,15 +1,10 @@
 package menu;
 
-import model.Artist;
-import model.User;
-import model.UserRole;
-import persistence.RepositoryArtist;
-import persistence.RepositoryUser;
-import persistence.RepositoryUserRole;
+import model.*;
+import persistence.*;
 
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Scanner;
+import javax.persistence.criteria.CriteriaBuilder;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class MusicMenu {
@@ -18,6 +13,8 @@ public class MusicMenu {
     static RepositoryUser           repoUser;
     static RepositoryUserRole       repoUserRole;
     static RepositoryArtist         repoArtist;
+    static RepositoryAlbum          repoAlbum;
+    static RepositorySong           repoSong;
 
     // User Roles
     static List<UserRole>           userRoles;
@@ -37,6 +34,8 @@ public class MusicMenu {
     // Constants
     static final Pattern            EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+
+
 
     // Menus
     static String []                logInMenu =
@@ -76,9 +75,33 @@ public class MusicMenu {
             {
                     "Content Menu:",
                     "Back to Main Menu",
-                    "Add Artist",
-                    "Add Album",
-                    "Add Song"
+                    "Add Content"
+            };
+
+    static String[]                 artistOptions =
+            {
+                    "Artist Options",
+                    "Return to artist selection",
+                    "New Album",
+                    "Edit current artist",
+                    "Delete current artist"
+            };
+
+    static String []                albumOptions =
+            {
+                    "Album options",
+                    "Return to album selection",
+                    "New Song",
+                    "Edit current album",
+                    "Delete current album"
+            };
+
+    static String []                songOptions =
+            {
+                    "Song options",
+                    "Return to song selection",
+                    "Edit current song",
+                    "Delete current song"
             };
 
 
@@ -92,6 +115,9 @@ public class MusicMenu {
         // Load all repositories
         repoUser =      new RepositoryUser();
         repoUserRole =  new RepositoryUserRole();
+        repoArtist =    new RepositoryArtist();
+        repoAlbum =     new RepositoryAlbum();
+        repoSong =      new RepositorySong();
 
         // Load all user roles
         System.out.println("Loading user roles...");
@@ -256,128 +282,350 @@ public class MusicMenu {
                 currentState = 1;
                 break;
             case 1:
-
+                editContent();
+                break;
         }
     }
 
-//    public static void editContent(int content) // 1 - artist, 2 - album, 3 - song
-//    {
-//        int state = 1;
-//        String artistName = "";
-//        String albumName = "";
-//
-//        while (state > 0)
-//        {
-//            switch (state) {
-//
-//                case 1:         // Check if we need to create a list of artists
-//                    if (content == 1)
-//                        state = 3;
-//                    else
-//                        state = 2;
-//                    break;
-//
-//                case 2:         // List all the existing artists
-//                    if ()
-//
-//                case 1: // Enter the artist
-//                    // Enter the artist name
-//                    do {
-//                        System.out.print("Please enter the Artist name, or type #Q to quit: ");
-//                        artistName = in.next();
-//                        if (artistName.length() > 50) {
-//                            System.out.println("Artist name should be less than 50 characters!");
-//                            continue;
-//                        }
-//                        break;
-//                    } while (true);
-//
-//                    // If artist name = 'Q' - quit
-//                    if (artistName.equals("#Q") || artistName.equals("#q")) {
-//                        state = 0;
-//                        break;
-//                    }
-//
-//                    // Check if we need to create one
-//                    if (repoArtist.findByName(artistName) == null) {
-//                        // New artist needed
-//                        state = 2;
-//                        if (content > 1) {
-//                            System.out.print("Artist not found. Create a new one? (y/n): ");
-//                            char opt = in.next().charAt(0);
-//                            if (opt != 'y' && opt != 'Y')
-//                                state = 1;
-//                        }
-//                        break;
-//                    }
-//
-//                    // New artist not needed
-//                    if (content == 1)
-//                    {
-//                        // If we wanted to create an artist, we don't need to do anything else.
-//                        System.out.println("Artist with this name already exists!");
-//                        state = 0;
-//                        break;
-//                    }
-//                    state = 3;
-//                    break;
-//
-//                case 2: // Create a new artist
-//                    Artist artist = new Artist();
-//                    artist.setArtistName(artistName);
-//
-//                    // Set genre
-//                    artist.setArtistGenre("Generic");
-//
-//                    System.out.print("Please specify if the artist is still active: ");
-//                    char opt = in.next().charAt(0);
-//                    artist.setActive(opt == 'y' || opt == 'Y');
-//
-//                    if (repoArtist.create(artist))
-//                        System.out.println("Artist created successfully!");
-//                    else
-//                        System.out.println("Failed to create the artist!");
-//
-//                    if (content == 1)
-//                        state = 0;
-//                    else
-//                        state = 3;
-//                    break;
-//
-//                case 3: // Enter the album name
-//                    do {
-//                        System.out.print("Please enter the Album name, or type ##Q to quit: ");
-//                        albumName = in.next();
-//                        if ((albumName.length() < 3) || (albumName.length() > 50)) {
-//                            System.out.println("Album name should be less than 50 characters!");
-//                            continue;
-//                        }
-//                        break;
-//                    } while (true);
-//
-//                    // If artist name = 'Q' - quit
-//                    if (albumName.equals("##Q") || albumName.equals("##q")) {
-//                        state = 1;
-//                        break;
-//                    }
-//
-//                    // Check if we need to create one
-//                    if (repoArtist.findByName(albumName) == null) {
-//                        // New artist needed
-//                        state = 2;
-//                        if (content > 1) {
-//                            System.out.print("Artist not found. Create a new one? (y/n): ");
-//                            opt = in.next().charAt(0);
-//                            if (opt != 'y' && opt != 'Y')
-//                                state = 1;
-//                        }
-//                        break;
-//                    }
-//            }
-//        }
-//
-//
-//    }
+    public static void editContent()
+    {
+        int state = 1;
+        char opt = ' ';
+        int option = 0;
+        boolean bEdit = false;
+        String[] contentArray;
+        Artist currentArtist = new Artist();
+        Album currentAlbum = new Album();
+        Song currentSong = new Song();
+        String artistName;
+        String albumName;
+
+        while (state > 0)
+        {
+            switch (state) {
+
+                case 1:         // Create a list of artists
+                    List<Artist> artistList = repoArtist.listAll();
+                    if (artistList == null)
+                    {
+                        System.out.println("Error retrieving artist list from the database!");
+                        return;
+                    }
+                    if (artistList.size() == 0)
+                    {
+                        System.out.println("No artists have been found in the database! Creating a new one...");
+                        bEdit = false;
+                        state = 2;
+                        break;
+                    }
+                    contentArray = new String[artistList.size() + 3];
+                    contentArray[0] = "Please select an artist from the database:";
+                    contentArray[1] = "Return to Music menu";
+                    contentArray[2] = "Add new Artist";
+
+                    for (int i = 0; i < artistList.size(); i++) {
+                        contentArray[i + 3] = artistList.get(i).getArtistName();
+                    }
+
+                    option = callMenu(contentArray, 0);
+                    if (option == 0)
+                        state = 0;
+                    else if (option == 1)
+                        state = 2;
+                    else {
+                        currentArtist = artistList.get(option - 2);
+                        state = 11;
+                    }
+                    break;
+
+
+
+                case 2: // Create a new artist
+                    // Enter the artist name
+                    if (in.hasNextLine())
+                        in.nextLine();
+                    System.out.print("Please enter the Artist name, or type ##Q to quit: ");
+                    artistName = in.nextLine();
+
+                    // If artist name = '##Q' - quit
+                    if (artistName.equals("##Q") || artistName.equals("##q")) {
+                        return;
+                    }
+
+                    if (!validateName(artistName, 3, 50)) {
+                        System.out.println("Album name should be between 3 and 50 characters and only contain letters!");
+                        break;
+                    }
+
+                    // Check if the artist already exists
+                    if (repoArtist.findByName(artistName) != null) {
+                        System.out.println("Artist with this name already exists!");
+                        break;
+                    }
+                    currentArtist = new Artist();
+                    currentArtist.setArtistName(artistName);
+
+                    System.out.print("Please specify if the artist is still active (y/n): ");
+                    opt = in.next().charAt(0);
+                    currentArtist.setActive(opt == 'y' || opt == 'Y');
+
+                    // Create the artist
+                    if (!repoArtist.create(currentArtist)) {
+                        System.out.println("Failed to create the artist!");
+                        return;
+                    }
+
+                    // Check if the user wants to add an album
+                    System.out.print("Do you want to add a new album to this artist? (y/n): ");
+                    opt = in.next().charAt(0);
+                    if (opt == 'y' || opt == 'Y')
+                        state = 11;
+                    else
+                        state = 1;
+                    break;
+
+                case 11: // Create the list of albums
+                    List<Album> albumList = repoAlbum.listByArtist(currentArtist);
+                    if (albumList == null)
+                    {
+                        System.out.println("Error retrieving album list from the database!");
+                        return;
+                    }
+                    if (albumList.size() == 0)
+                    {
+                        System.out.println("No albums for this artist have been found! Creating a new one...");
+                        state = 12;
+                        break;
+                    }
+                    contentArray = new String[albumList.size() + 3];
+                    contentArray[0] = "Please select an album from the database:";
+                    contentArray[1] = "Return to Artist menu";
+                    contentArray[2] = "Add new Album";
+
+                    for (int i = 0; i < albumList.size(); i++) {
+                        contentArray[i + 3] = albumList.get(i).getAlbumName();
+                    }
+
+                    option = callMenu(contentArray, 0);
+                    if (option == 0)
+                        state = 1;
+                    else if (option == 1)
+                        state = 12;
+                    else {
+                        currentAlbum = albumList.get(option - 2);
+                        state = 21;
+                    }
+                    break;
+
+                case 12:     // Create a new album - enter name
+                    // Enter the album name
+                    if (in.hasNextLine())
+                        in.nextLine();
+                    System.out.print("Please enter the Album name, or type ##Q to quit: ");
+                    albumName = in.nextLine();
+
+                    // If album name = '##Q' - quit
+                    if (albumName.equals("##Q") || albumName.equals("##q")) {
+                        state = 1;
+                        break;
+                    }
+
+                    // Validate album name
+                    if (!validateName(albumName, 3, 50)) {
+                        System.out.println("Album name should be between 3 and 50 characters and only contain letters!");
+                        break;
+                    }
+
+                    // Check if the album already exists
+                    if (repoAlbum.findByName(albumName) != null) {
+                        System.out.println("Album with this name already exists!");
+                        break;
+                    }
+
+                    // Create new album
+                    currentAlbum = new Album();
+                    currentAlbum.setAlbumName(albumName);
+                    state = 13;
+                    break;
+
+                case 13:        // Create new album - enter genre
+                    // Set genre
+                    if (in.hasNextLine())
+                        in.nextLine();
+                    System.out.println("Please enter the album genre");
+                    String genre = in.nextLine();
+                    if (!validateName(genre, 3, 50))
+                    {
+                        System.out.println("Genre name should be between 3 and 50 characters and only contain letters!");
+                        break;
+                    }
+                    currentAlbum.setAlbumGenre(genre);
+                    state = 14;
+                    break;
+
+                case 14:        // Create new album - enter year
+                    System.out.print("Please enter the album year: ");
+                    // Check if number has been entered
+                    int year;
+                    try {
+                        year = in.nextInt();
+                    }
+                    catch (InputMismatchException e)
+                    {
+                        System.out.println("Year should only contain numbers!");
+                        break;
+                    }
+
+                    // Check if year is real
+                    if (year < 0 || year > Calendar.getInstance().get(Calendar.YEAR))
+                    {
+                        System.out.println("Year should be between 0 and " + Calendar.getInstance().get(Calendar.YEAR));
+                        break;
+                    }
+
+                    // Set year
+                    currentAlbum.setAlbumYear(year);
+                    state = 15;
+                    break;
+
+                case 15:    // Create album
+                    currentAlbum.setArtist(currentArtist);
+                    if (!repoAlbum.create(currentAlbum))
+                    {
+                        System.out.println("Failed to create an album!");
+                        return;
+                    }
+
+                    // Check if the user wants to add an album
+                    System.out.print("Do you want to add a new song to this album? (y/n): ");
+                    opt = in.next().charAt(0);
+                    if (opt == 'y' || opt == 'Y')
+                        state = 21;
+                    else
+                        state = 11;
+                    break;
+
+                case 21: // Create the list of songs
+                    List<Song> songList = repoSong.listByAlbum(currentAlbum);
+                    if (songList == null)
+                    {
+                        System.out.println("Error retrieving song list from the database!");
+                        return;
+                    }
+                    if (songList.size() == 0)
+                    {
+                        System.out.println("No songs for this album have been found! Creating a new one...");
+                        state = 22;
+                        break;
+                    }
+                    contentArray = new String[songList.size() + 3];
+                    contentArray[0] = "Please select a song from the database:";
+                    contentArray[1] = "Return to Albums menu";
+                    contentArray[2] = "Add new Song";
+
+                    for (int i = 0; i < songList.size(); i++) {
+                        contentArray[i + 3] = songList.get(i).getSongName();
+                    }
+
+                    option = callMenu(contentArray, 0);
+                    if (option == 0)
+                        state = 11;
+                    else if (option == 1)
+                        state = 22;
+                    else {
+                        currentSong = songList.get(option - 2);
+                        state = 31;
+                    }
+                    break;
+
+                case 22:     // Create a new song - enter name
+                    // Enter the song name
+                    if (in.hasNextLine())
+                        in.nextLine();
+                    System.out.print("Please enter the Song name, or type ##Q to quit: ");
+                    String songName = in.nextLine();
+
+                    // If song name = '##Q' - quit
+                    if (songName.equals("##Q") || songName.equals("##q")) {
+                        state = 11;
+                        break;
+                    }
+
+                    // Validate song name
+                    if (!validateName(songName, 3, 50)) {
+                        System.out.println("Song name should be between 3 and 50 characters and only contain letters!");
+                        break;
+                    }
+
+                    // Check if the song already exists
+                    if (repoAlbum.findByName(songName) != null) {
+                        System.out.println("Song with this name already exists!");
+                        break;
+                    }
+
+                    // Create new song
+                    currentSong = new Song();
+                    currentSong.setSongName(songName);
+                    currentSong.setSongYear(currentAlbum.getAlbumYear());
+                    state = 23;
+                    break;
+
+                case 23:        // Create a new song - enter rating
+                    int iRating;
+                    System.out.print("Please enter the song rating: ");
+                    try {
+                        iRating = in.nextInt();
+                    }
+                    catch (InputMismatchException e)
+                    {
+                        System.out.println("Rating should be an integer number!");
+                        break;
+                    }
+
+                    if (iRating < 0 || iRating > 10)
+                    {
+                        System.out.println("Rating should be a number between 0 and 10!");
+                        break;
+                    }
+
+                    currentSong.setSongRating(iRating);
+                    state = 24;
+                    break;
+
+                case 24:        // Create a new song - enter path
+                    System.out.print("Please enter the path to the song\n>: ");
+                    if (in.hasNextLine())
+                        in.nextLine();
+                    String path = in.nextLine();
+                    if (path.length() > 255) {
+                        System.out.println("Path length should not exceed 255!");
+                        break;
+                    }
+
+                    currentSong.setSongPath(path);
+                    state = 25;
+                    break;
+
+                case 25:        // Create song
+                    currentSong.setAlbum(currentAlbum);
+                    if (!repoSong.create(currentSong))
+                    {
+                        System.out.println("Failed to create a song!");
+                        return;
+                    }
+
+                    // Check if the user wants to add another song
+                    System.out.print("Do you want to add a new song to this album? (y/n): ");
+                    opt = in.next().charAt(0);
+                    if (opt == 'y' || opt == 'Y')
+                        state = 21;
+                    else
+                        state = 11;
+                    break;
+            }
+        }
+
+    }
 
     public static void authUser()
     {
@@ -518,6 +766,15 @@ public class MusicMenu {
         } while (true);
 
         return option;
+    }
+
+    public static boolean validateName(String name, int min, int max)
+    {
+        if (name.length() < min || name.length() > max)
+            return false;
+
+        Pattern pattern = Pattern.compile("[^a-zA-Z ]");
+        return !pattern.matcher(name).find();
     }
 
 }

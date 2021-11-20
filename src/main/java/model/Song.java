@@ -26,13 +26,12 @@ public class Song {
         this.album = album;
     }
 
+    public Song() {
+    }
+
     public int getIdSong() {
         return idSong;
     }
-
-//    public void setIdSong(int idSong) {
-//        this.idSong = idSong;
-//    }
 
     public String getSongName() {
         return songName;
