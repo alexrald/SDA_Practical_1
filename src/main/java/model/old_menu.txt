@@ -1,0 +1,104 @@
+public static void editContent(int content) // 1 - artist, 2 - album, 3 - song
+    {
+        int state = 1;
+        String artistName = "";
+        String albumName = "";
+
+        while (state > 0)
+        {
+            switch (state) {
+                case 1: // Enter the artist
+                    // Enter the artist name
+                    do {
+                        System.out.print("Please enter the Artist name, or type #Q to quit: ");
+                        artistName = in.next();
+                        if (artistName.length() > 50) {
+                            System.out.println("Artist name should be less than 50 characters!");
+                            continue;
+                        }
+                        break;
+                    } while (true);
+
+                    // If artist name = 'Q' - quit
+                    if (artistName.equals("#Q") || artistName.equals("#q")) {
+                        state = 0;
+                        break;
+                    }
+
+                    // Check if we need to create one
+                    if (repoArtist.findByName(artistName) == null) {
+                        // New artist needed
+                        state = 2;
+                        if (content > 1) {
+                            System.out.print("Artist not found. Create a new one? (y/n): ");
+                            char opt = in.next().charAt(0);
+                            if (opt != 'y' && opt != 'Y')
+                                state = 1;
+                        }
+                        break;
+                    }
+
+                    // New artist not needed
+                    if (content == 1)
+                    {
+                        // If we wanted to create an artist, we don't need to do anything else.
+                        System.out.println("Artist with this name already exists!");
+                        state = 0;
+                        break;
+                    }
+                    state = 3;
+                    break;
+
+                case 2: // Create a new artist
+                    Artist artist = new Artist();
+                    artist.setArtistName(artistName);
+
+                    // Set genre
+                    artist.setArtistGenre("Generic");
+
+                    System.out.print("Please specify if the artist is still active: ");
+                    char opt = in.next().charAt(0);
+                    artist.setActive(opt == 'y' || opt == 'Y');
+
+                    if (repoArtist.create(artist))
+                        System.out.println("Artist created successfully!");
+                    else
+                        System.out.println("Failed to create the artist!");
+
+                    if (content == 1)
+                        state = 0;
+                    else
+                        state = 3;
+                    break;
+
+                case 3: // Enter the album name
+                    do {
+                        System.out.print("Please enter the Album name, or type ##Q to quit: ");
+                        albumName = in.next();
+                        if ((albumName.length() < 3) || (albumName.length() > 50)) {
+                            System.out.println("Album name should be less than 50 characters!");
+                            continue;
+                        }
+                        break;
+                    } while (true);
+
+                    // If artist name = 'Q' - quit
+                    if (albumName.equals("##Q") || albumName.equals("##q")) {
+                        state = 1;
+                        break;
+                    }
+
+                    // Check if we need to create one
+                    if (repoArtist.findByName(albumName) == null) {
+                        // New artist needed
+                        state = 2;
+                        if (content > 1) {
+                            System.out.print("Artist not found. Create a new one? (y/n): ");
+                            opt = in.next().charAt(0);
+                            if (opt != 'y' && opt != 'Y')
+                                state = 1;
+                        }
+                        break;
+                    }
+            }
+        }
