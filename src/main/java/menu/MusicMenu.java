@@ -3,7 +3,6 @@ package menu;
 import model.*;
 import persistence.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -231,7 +230,7 @@ public class MusicMenu {
 
     public static void showMusicMenu()
     {
-        int option = 0;
+        int option;
         int state = 1;
         int offset = -1;
         String[] contentBuf;
@@ -370,6 +369,7 @@ public class MusicMenu {
                     if (albumList.size() == 0) {
                         System.out.println("No albums exist in the data base for this artist!");
                         state = 111 + offset;
+                        break;
                     }
 
                     contentBuf = new String[albumList.size() + 3];
@@ -424,6 +424,7 @@ public class MusicMenu {
                     if (songList.size() == 0) {
                         System.out.println("No songs exist in the data base for this artist!");
                         state = 111 + offset;
+                        break;
                     }
 
                     contentBuf = new String[songList.size() + 3];
@@ -672,10 +673,10 @@ public class MusicMenu {
     public static void editContent()
     {
         int state = 1;
-        char opt = ' ';
-        int option = 0;
+        char opt;
+        int option;
         boolean bEdit = false;
-        boolean bRes = false;
+        boolean bRes;
         String[] contentArray;
         Artist currentArtist = new Artist();
         Album currentAlbum = new Album();

@@ -8,7 +8,7 @@ import java.util.List;
 
 public class RepositoryLibrary {
 
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
 
     public RepositoryLibrary() {
         entityManager = DbUtil.getEntityManager();
