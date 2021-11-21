@@ -81,4 +81,13 @@ public class User {
     {
         this.userRole = userRole;
     }
+
+    public void displayUserData() {
+        System.out.println("");
+        System.out.println("User name:        " + userName);
+        System.out.println("User ID:          " + idUser);
+        System.out.println("E-mail:           " + eMail);
+        System.out.println("Date of registry: " + date_of_registry);
+        System.out.println("User role:        " + userRole.getRoleName());
+    }
 }

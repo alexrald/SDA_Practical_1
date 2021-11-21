@@ -15,6 +15,20 @@ public class RepositoryUserRole {
         entityManager = DbUtil.getEntityManager();
     }
 
+    public boolean createUserRole(UserRole userRole) {
+        try {
+            entityManager.getTransaction().begin();
+            entityManager.persist(userRole);
+            entityManager.getTransaction().commit();
+            return true;
+        }
+        catch (Exception e)
+        {
+            entityManager.getTransaction().rollback();
+            return false;
+        }
+    }
+
     public List<UserRole> listUserRoles()                   // Get all user roles
     {
         try
@@ -55,6 +69,7 @@ public class RepositoryUserRole {
             return null;
         }
     }
+
 
 
 }

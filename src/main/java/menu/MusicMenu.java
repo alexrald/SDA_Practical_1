@@ -52,8 +52,8 @@ public class MusicMenu {
                     "Log Out",
                     "My Profile",
                     "My Music",
-                    "Content Actions",
-                    "User Actions"
+                    "Edit content",
+                    "Admin Actions"
             };
 
     static String[]                 profileMenu =
@@ -71,18 +71,11 @@ public class MusicMenu {
                     "Back to Main Menu"
             };
 
-    static String[]                 contentMenu =
-            {
-                    "Content Menu:",
-                    "Back to Main Menu",
-                    "Add Content"
-            };
-
     static String[]                 artistOptions =
             {
                     "Artist Options",
                     "Return to artist selection",
-                    "New Album",
+                    "Browse Artist Albums",
                     "Edit current artist",
                     "Delete current artist"
             };
@@ -91,7 +84,7 @@ public class MusicMenu {
             {
                     "Album options",
                     "Return to album selection",
-                    "New Song",
+                    "Browse Album Songs",
                     "Edit current album",
                     "Delete current album"
             };
@@ -103,6 +96,22 @@ public class MusicMenu {
                     "Edit current song",
                     "Delete current song"
             };
+
+    static String []                adminActions =
+            {
+                    "Admin Actions",
+                    "Return to Main Menu",
+                    "Display all users",
+                    "Set User Role"
+            };
+
+    static List<UserRole>           defUserRoles = Arrays.asList(
+            new UserRole("Administrator", true, true),
+            new UserRole("Contributor", false, true),
+            new UserRole("User", false, false),
+            new UserRole("Banned", false, false)
+    );
+    /////// HOW TO TRUNCATE TABLE USING HIBERNATE????
 
 
 
@@ -124,10 +133,24 @@ public class MusicMenu {
         userRoles = repoUserRole.listUserRoles();
         if (userRoles == null)
         {
-            System.out.println("User roles not found!");
+            System.out.println("Failed to retrieve user roles!");
             return;
         }
         System.out.println("Found " + userRoles.size() + " roles");
+
+        if (userRoles.size() == 0)
+        {
+            System.out.println("No user roles found! Creating from default...");
+            for(UserRole userRole: defUserRoles)
+            {
+                if (!repoUserRole.createUserRole(userRole))
+                {
+                    System.out.println("Failed to create user role!");
+                    return;
+                }
+            }
+            System.out.println("Successfully created user roles!");
+        }
 
         // Find if the app has any admins
         System.out.println("Requesting admin list...");
@@ -173,7 +196,11 @@ public class MusicMenu {
                     System.out.println("Not implemented yet!");
                     break;
                 case 4:         // Content Menu
-                    showContentMenu();
+                    editContent();
+                    currentState = 1;
+                    break;
+                case 5:         // Admin menu
+                    adminMenu();
                     break;
                 default:
                     currentState = 0;
@@ -183,6 +210,69 @@ public class MusicMenu {
             }
         }
 
+    }
+
+    public static void adminMenu() {
+        int option = callMenu(adminActions, 0);
+        List<User>  userList;
+        String[]    userNames;
+        User        userToEdit;
+
+        switch (option) {
+            case 0:         // Return to main menu
+                currentState = 1;
+                break;
+            case 1:         // Display all users
+                userList = repoUser.listAllUsers();
+                for (User user: userList)
+                {
+                    user.displayUserData();
+                    System.out.println();
+                }
+                break;
+            case 2:         // Set User Role
+                userList = repoUser.listAllUsers();
+                if (userList == null)
+                {
+                    System.out.println("Failed to load user list!");
+                    return;
+                }
+                if (userList.size() == 0)
+                {
+                    System.out.println("No users found!");
+                    return;
+                }
+                userNames = new String[userList.size() + 2];
+                userNames[0] = "Please select a user: ";
+                userNames[1] = "Return to Admin Menu";
+                for (int i = 0; i < userList.size(); i++)
+                {
+                    userNames[i + 2] = userList.get(i).getUserName();
+                }
+                option = callMenu(userNames, 0);
+                if (option == 0)
+                    break;
+                else
+                    userToEdit = userList.get(option - 1);
+
+                userNames = new String[userRoles.size() + 2];
+                userNames[0] = "Please select a user role to assign to " + userToEdit.getUserName();
+                userNames[1] = "Return to Admin menu";
+                for (int i = 0; i < userRoles.size(); i++)
+                {
+                    userNames[i + 2] = userRoles.get(i).getRoleName();
+                }
+                option = callMenu(userNames, 0);
+                if (option == 0)
+                    break;
+
+                userToEdit.setUserRole(userRoles.get(option - 1));
+                if (repoUser.updateUser(userToEdit))
+                    System.out.println("Successfully updated the user " + userToEdit.getUserName());
+                else
+                    System.out.println("Failed to update the user!");
+                break;
+        }
     }
 
     public static void logIn()
@@ -232,10 +322,7 @@ public class MusicMenu {
 
     public static void showUserProfile()
     {
-        System.out.println("User name: " + currentUser.getUserName());
-        System.out.println("Role:      " + currentUser.getUserRole().getRoleName());
-        System.out.println("E-mail:    " + currentUser.geteMail());
-
+        currentUser.displayUserData();
 
         int option = callMenu(profileMenu, 0);
 
@@ -272,27 +359,13 @@ public class MusicMenu {
         }
     }
 
-    public static void showContentMenu()
-    {
-        int option = callMenu(contentMenu, 0);
-
-        switch (option)
-        {
-            case 0:
-                currentState = 1;
-                break;
-            case 1:
-                editContent();
-                break;
-        }
-    }
-
     public static void editContent()
     {
         int state = 1;
         char opt = ' ';
         int option = 0;
         boolean bEdit = false;
+        boolean bRes = false;
         String[] contentArray;
         Artist currentArtist = new Artist();
         Album currentAlbum = new Album();
@@ -300,7 +373,7 @@ public class MusicMenu {
         String artistName;
         String albumName;
 
-        while (state > 0)
+        while (true)
         {
             switch (state) {
 
@@ -329,21 +402,47 @@ public class MusicMenu {
 
                     option = callMenu(contentArray, 0);
                     if (option == 0)
-                        state = 0;
-                    else if (option == 1)
+                        return;
+                    else if (option == 1) {
+                        bEdit = false;
                         state = 2;
+                    }
                     else {
                         currentArtist = artistList.get(option - 2);
-                        state = 11;
+                        state = 101;
                     }
                     break;
 
 
+                case 101:   // Artist options
+                    // Show artist data and let user decide what to do
+                    System.out.println("Artist name:      " + currentArtist.getArtistName());
+                    System.out.println("Artist is active: " + currentArtist.isActive());
+                    option = callMenu(artistOptions, 0);
+
+                    switch (option)
+                    {
+                        case 0:     // Return to artist selection
+                            state = 1;
+                            break;
+                        case 1:     // Browse artist albums
+                            state = 11;
+                            break;
+                        case 2:     // Edit artist
+                            state = 2;
+                            bEdit = true;
+                            break;
+                        case 3:     // Delete artist
+                            System.out.println("Not implemented yet!");
+                            break;
+                    }
+                    break;
 
                 case 2: // Create a new artist
                     // Enter the artist name
-                    if (in.hasNextLine())
-                        in.nextLine();
+//                    while (in.hasNext())
+//                        in.nextLine();
+                    in = new Scanner(System.in);
                     System.out.print("Please enter the Artist name, or type ##Q to quit: ");
                     artistName = in.nextLine();
 
@@ -353,7 +452,7 @@ public class MusicMenu {
                     }
 
                     if (!validateName(artistName, 3, 50)) {
-                        System.out.println("Album name should be between 3 and 50 characters and only contain letters!");
+                        System.out.println("Artist name should be between 3 and 50 characters and only contain letters!");
                         break;
                     }
 
@@ -362,18 +461,24 @@ public class MusicMenu {
                         System.out.println("Artist with this name already exists!");
                         break;
                     }
-                    currentArtist = new Artist();
+                    if (!bEdit)
+                        currentArtist = new Artist();
                     currentArtist.setArtistName(artistName);
 
                     System.out.print("Please specify if the artist is still active (y/n): ");
                     opt = in.next().charAt(0);
                     currentArtist.setActive(opt == 'y' || opt == 'Y');
 
-                    // Create the artist
-                    if (!repoArtist.create(currentArtist)) {
-                        System.out.println("Failed to create the artist!");
+                    // Create or edit the artist
+                    if (bEdit)
+                        bRes = repoArtist.update(currentArtist);
+                    else
+                        bRes = repoArtist.create(currentArtist);
+                    if (!bRes) {
+                        System.out.println("Failed to create or update the artist!");
                         return;
                     }
+
 
                     // Check if the user wants to add an album
                     System.out.print("Do you want to add a new album to this artist? (y/n): ");
@@ -409,18 +514,47 @@ public class MusicMenu {
                     option = callMenu(contentArray, 0);
                     if (option == 0)
                         state = 1;
-                    else if (option == 1)
+                    else if (option == 1) {
+                        bEdit = false;
                         state = 12;
+                    }
                     else {
                         currentAlbum = albumList.get(option - 2);
-                        state = 21;
+                        state = 111;
                     }
                     break;
 
+                case 111:       // Album Options
+                    System.out.println("Album name:   " + currentAlbum.getAlbumName());
+                    System.out.println("Album artist: " + currentArtist.getArtistName());
+                    System.out.println("Album genre:  " + currentAlbum.getAlbumGenre());
+                    System.out.println("Album year:   " + currentAlbum.getAlbumYear());
+                    option = callMenu(albumOptions, 0);
+
+                    switch (option)
+                    {
+                        case 0:     // Return to album selection
+                            state = 11;
+                            break;
+                        case 1:     // Browse album songs
+                            state = 21;
+                            break;
+                        case 2:     // Edit album
+                            state = 12;
+                            bEdit = true;
+                            break;
+                        case 3:     // Delete album
+                            System.out.println("Not implemented yet!");
+                            break;
+                    }
+                    break;
+
+
                 case 12:     // Create a new album - enter name
                     // Enter the album name
-                    if (in.hasNextLine())
-                        in.nextLine();
+//                    while (in.hasNext())
+//                        in.nextLine();
+                    in = new Scanner(System.in);
                     System.out.print("Please enter the Album name, or type ##Q to quit: ");
                     albumName = in.nextLine();
 
@@ -443,16 +577,18 @@ public class MusicMenu {
                     }
 
                     // Create new album
-                    currentAlbum = new Album();
+                    if (!bEdit)
+                        currentAlbum = new Album();
                     currentAlbum.setAlbumName(albumName);
                     state = 13;
                     break;
 
                 case 13:        // Create new album - enter genre
                     // Set genre
-                    if (in.hasNextLine())
-                        in.nextLine();
-                    System.out.println("Please enter the album genre");
+//                    while (in.hasNext())
+//                        in.nextLine();
+                    in = new Scanner(System.in);
+                    System.out.print("Please enter the album genre: ");
                     String genre = in.nextLine();
                     if (!validateName(genre, 3, 50))
                     {
@@ -490,9 +626,14 @@ public class MusicMenu {
 
                 case 15:    // Create album
                     currentAlbum.setArtist(currentArtist);
-                    if (!repoAlbum.create(currentAlbum))
+                    if (bEdit)
+                        bRes = repoAlbum.update(currentAlbum);
+                    else
+                        bRes = repoAlbum.create(currentAlbum);
+
+                    if (!bRes)
                     {
-                        System.out.println("Failed to create an album!");
+                        System.out.println("Failed to create/update an album!");
                         return;
                     }
 
@@ -530,18 +671,44 @@ public class MusicMenu {
                     option = callMenu(contentArray, 0);
                     if (option == 0)
                         state = 11;
-                    else if (option == 1)
+                    else if (option == 1) {
+                        bEdit = false;
                         state = 22;
+                    }
                     else {
                         currentSong = songList.get(option - 2);
-                        state = 31;
+                        state = 121;
+                    }
+                    break;
+
+                case 121:       // Album Options
+                    System.out.println("Song name:   " + currentSong.getSongName());
+                    System.out.println("Song album:  " + currentAlbum.getAlbumName());
+                    System.out.println("Song artist: " + currentArtist.getArtistName());
+                    System.out.println("Song rating: " + currentSong.getSongRating());
+                    System.out.println("Song path:   " + currentSong.getSongPath());
+                    option = callMenu(songOptions, 0);
+
+                    switch (option)
+                    {
+                        case 0:     // Return to song selection
+                            state = 21;
+                            break;
+                        case 1:     // Edit song
+                            state = 22;
+                            bEdit = true;
+                            break;
+                        case 2:     // Delete song
+                            System.out.println("Not implemented yet!");
+                            break;
                     }
                     break;
 
                 case 22:     // Create a new song - enter name
                     // Enter the song name
-                    if (in.hasNextLine())
-                        in.nextLine();
+//                    while (in.hasNext())
+//                        in.nextLine();
+                    in = new Scanner(System.in);
                     System.out.print("Please enter the Song name, or type ##Q to quit: ");
                     String songName = in.nextLine();
 
@@ -564,7 +731,8 @@ public class MusicMenu {
                     }
 
                     // Create new song
-                    currentSong = new Song();
+                    if (!bEdit)
+                        currentSong = new Song();
                     currentSong.setSongName(songName);
                     currentSong.setSongYear(currentAlbum.getAlbumYear());
                     state = 23;
@@ -594,8 +762,9 @@ public class MusicMenu {
 
                 case 24:        // Create a new song - enter path
                     System.out.print("Please enter the path to the song\n>: ");
-                    if (in.hasNextLine())
-                        in.nextLine();
+//                    while (in.hasNext())
+//                        in.nextLine();
+                    in = new Scanner(System.in);
                     String path = in.nextLine();
                     if (path.length() > 255) {
                         System.out.println("Path length should not exceed 255!");
@@ -608,20 +777,31 @@ public class MusicMenu {
 
                 case 25:        // Create song
                     currentSong.setAlbum(currentAlbum);
-                    if (!repoSong.create(currentSong))
+
+                    if (bEdit)
+                        bRes = repoSong.create(currentSong);
+                    else
+                        bRes = repoSong.update(currentSong);
+
+                    if (!bRes)
                     {
-                        System.out.println("Failed to create a song!");
+                        System.out.println("Failed to create/update the song!");
                         return;
                     }
 
                     // Check if the user wants to add another song
                     System.out.print("Do you want to add a new song to this album? (y/n): ");
                     opt = in.next().charAt(0);
-                    if (opt == 'y' || opt == 'Y')
-                        state = 21;
+                    if (opt == 'y' || opt == 'Y') {
+                        bEdit = false;
+                        state = 22;
+                    }
                     else
-                        state = 11;
+                        state = 21;
                     break;
+
+                default:
+                    return;
             }
         }
 
@@ -636,6 +816,12 @@ public class MusicMenu {
         if (user == null)
         {
             System.out.println("User " + userName + " does not exist!");
+            return;
+        }
+
+        if (user.getUserRole().getRoleName().equals("Banned"))
+        {
+            System.out.println("Your account has been deactivated. Please contact the administrator");
             return;
         }
 
@@ -742,7 +928,7 @@ public class MusicMenu {
     {
         int option;
         do {
-            System.out.println("\n\n");
+            System.out.println("\n");
             System.out.println(menu[0]);
             for (int i = 1; i < menu.length - hiddenPoints; i++)
             {
