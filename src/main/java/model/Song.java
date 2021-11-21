@@ -72,4 +72,22 @@ public class Song {
     public void setAlbum(Album album) {
         this.album = album;
     }
+
+    public void play()
+    {
+        System.out.println("Playing " + songName + "...");
+    }
+
+    public void displaySongInfo()
+    {
+        System.out.println("");
+        System.out.println("Song Name:     " + songName);
+        System.out.println("Song Album:    " + album.getAlbumName());
+        System.out.println("Song Artist:   " + album.getArtist().getArtistName());
+        System.out.println("Album Year:    " + album.getAlbumYear());
+        System.out.println("Genre:         " + album.getAlbumGenre());
+        System.out.println("Artist active: " + album.getArtist().isActive());
+        System.out.println("Song Rating:   " + songRating);
+        System.out.println("Song Path:     " + songPath);
+    }
 }

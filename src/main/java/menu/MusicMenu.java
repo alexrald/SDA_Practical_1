@@ -15,6 +15,7 @@ public class MusicMenu {
     static RepositoryArtist         repoArtist;
     static RepositoryAlbum          repoAlbum;
     static RepositorySong           repoSong;
+    static RepositoryLibrary        repoLibrary;
 
     // User Roles
     static List<UserRole>           userRoles;
@@ -67,8 +68,22 @@ public class MusicMenu {
 
     static String[]                 musicMenu =
             {
-                    "Music Menu:",
-                    "Back to Main Menu"
+                    "Music Menu",
+                    "Back to Main Menu",
+                    "Display Library",
+                    "Browse Library",
+                    "Add New Songs",
+                    "Check for artist updates",
+                    "Manage subscriptions"
+            };
+
+    static String []                musicSelect =
+            {
+                    "Music Selection",
+                    "Return to Music Menu",
+                    "Browse by Artist",
+                    "Browse by Album",
+                    "Browse by Song"
             };
 
     static String[]                 artistOptions =
@@ -127,6 +142,7 @@ public class MusicMenu {
         repoArtist =    new RepositoryArtist();
         repoAlbum =     new RepositoryAlbum();
         repoSong =      new RepositorySong();
+        repoLibrary =   new RepositoryLibrary();
 
         // Load all user roles
         System.out.println("Loading user roles...");
@@ -193,7 +209,8 @@ public class MusicMenu {
                     showUserProfile();
                     break;
                 case 3:         // Music Menu
-                    System.out.println("Not implemented yet!");
+                    showMusicMenu();
+                    currentState = 1;
                     break;
                 case 4:         // Content Menu
                     editContent();
@@ -210,6 +227,281 @@ public class MusicMenu {
             }
         }
 
+    }
+
+    public static void showMusicMenu()
+    {
+        int option = 0;
+        int state = 1;
+        int offset = -1;
+        String[] contentBuf;
+        char opt;
+
+        List<Artist> artistList = null;
+        List<Album> albumList = null;
+        List<Song> songList = null;
+
+        Artist currentArtist = null;
+        Album currentAlbum = null;
+        Song currentSong = null;
+
+        while (true)
+        {
+            switch (state)
+            {
+                case 1:       // Music Menu
+                    option = callMenu(musicMenu, 0);
+
+                    switch (option)     // Option selected in the menu
+                    {
+                        case 0:     // Return
+                            return;
+                        case 1:     // Display Library
+
+                            state = 1;
+                            break;
+                        case 2:     // Browse Library
+                            state = 101;
+                            offset = 0;
+                            break;
+                        case 3:     // Add New Song
+                            state = 101;
+                            offset = 100;
+                            break;
+                        default:
+                            System.out.println("Not implemented yet!");
+                            break;
+                    }
+                    break;      // case 1
+
+                case 101:       // Music Selection
+                    option = callMenu(musicSelect, 0);
+                    switch (option)
+                    {
+                        case 0:     // Return
+                            state = 1;
+                            break;
+                        case 1:     // Search by Artist
+                            state = 111 + offset;   // 111 for Library, 211 for New Music
+                            break;
+                        case 2:     // Search by Album
+                            state = 121 + offset;   // 121 for Library, 221 for New Music
+                            currentArtist = null;
+                            break;
+                        case 3:     // Search by Song
+                            state = 131 + offset;   // 131 for Library, 231 for New Music
+                            currentArtist = null;
+                            currentAlbum = null;
+                            break;
+                        default:
+                            System.out.println("Not implemented yet!");
+                            break;
+                    }
+                    break;  // case 101
+
+                case 111:       // Library - Display Artists
+                    artistList = repoLibrary.getAllArtists(currentUser);
+                    state = 212;
+                    break;
+
+                case 211:       // All Music - Display All Artists
+                    artistList = repoArtist.listAll();
+                    state = 212;
+                    break;
+                case 212:
+                    if (artistList == null) {
+                        System.out.println("Error getting artists from the data base!");
+                        state = 101;
+                        break;
+                    }
+                    if (artistList.size() == 0) {
+                        System.out.println("No artist exist in the data base!");
+                        return;
+                    }
+
+                    contentBuf = new String[artistList.size() + 3];
+                    contentBuf[0] = "=== Artist list ===";
+                    contentBuf[1] = "[Return to Browse Music]";
+                    contentBuf[2] = "[Search by Artist Name]";
+                    for (int i = 0; i < artistList.size(); i++)
+                    {
+                        contentBuf[i + 3] = "Artist **" + artistList.get(i).getArtistName() + "**";
+                    }
+                    option = callMenu(contentBuf, 0);
+
+                    if (option == 0) {
+                        state = 101;
+                        break;
+                    }
+                    else if (option == 1)
+                    {
+                        state = 215;
+                    }
+                    else
+                    {
+                        currentArtist = artistList.get(option - 2);
+                        artistList = null;
+                        state = 121 + offset;
+                    }
+                    break;      // case 211
+
+                case 121:
+                    if (currentArtist == null)
+                        albumList = repoLibrary.getAllAlbums(currentUser);
+                    else
+                        albumList = repoLibrary.getAlbumsByArtist(currentUser, currentArtist);
+                    state = 222;
+                    break;
+
+                case 221:       // All Music - Display All Albums
+                    if (currentArtist == null)
+                        albumList = repoAlbum.listAll();
+                    else
+                        albumList = repoAlbum.listByArtist(currentArtist);
+                    state = 222;
+                    break;
+
+                case 222:
+                    if (albumList == null) {
+                        System.out.println("Error getting albums from the data base!");
+                        state = 111 + offset;
+                        break;
+                    }
+                    if (albumList.size() == 0) {
+                        System.out.println("No albums exist in the data base for this artist!");
+                        state = 111 + offset;
+                    }
+
+                    contentBuf = new String[albumList.size() + 3];
+                    contentBuf[0] = "=== Album list ===";
+                    contentBuf[1] = "[Return]";
+                    contentBuf[2] = "[Search by Album Name]";
+                    for (int i = 0; i < albumList.size(); i++)
+                    {
+                        contentBuf[i + 3] = "Album **" + albumList.get(i).getAlbumName()
+                                + "** by " + albumList.get(i).getArtist().getArtistName();
+                    }
+                    option = callMenu(contentBuf, 0);
+
+                    if (option == 0) {
+                        state = 111 + offset;
+                        break;
+                    }
+                    else if (option == 1)
+                    {
+                        state = 225;
+                    }
+                    else
+                    {
+                        currentAlbum = albumList.get(option - 2);
+                        albumList = null;
+                        state = 131 + offset;
+                    }
+                    break;      // case 222
+
+                case 131:
+                    if (currentAlbum == null)
+                        songList = repoLibrary.getAllSongs(currentUser);
+                    else
+                        songList = repoLibrary.getSongsByAlbum(currentUser, currentAlbum);
+                    state = 232;
+                    break;
+
+                case 231:
+                    if (currentAlbum == null)
+                        songList = repoSong.listAll();
+                    else
+                        songList = repoSong.listByAlbum(currentAlbum);
+                    state = 232;
+                    break;
+
+                case 232:
+                    if (songList == null) {
+                        System.out.println("Error getting songs from the data base!");
+                        state = 111 + offset;
+                        break;
+                    }
+                    if (songList.size() == 0) {
+                        System.out.println("No songs exist in the data base for this artist!");
+                        state = 111 + offset;
+                    }
+
+                    contentBuf = new String[songList.size() + 3];
+                    contentBuf[0] = "=== Song list ===";
+                    contentBuf[1] = "[Return]";
+                    contentBuf[2] = "[Search by Song Name]";
+                    for (int i = 0; i < songList.size(); i++)
+                    {
+                        Song song = songList.get(i);
+                        contentBuf[i + 3] = "Song **" + song.getSongName()
+                                + "** from the album " + song.getAlbum().getAlbumName()
+                                + " by " + song.getAlbum().getArtist().getArtistName();
+                    }
+                    option = callMenu(contentBuf, 0);
+
+                    if (option == 0) {
+                        if (currentArtist == null)
+                            state = 101 + offset;
+                        else
+                            state = 121 + offset;
+                        break;
+                    }
+                    else if (option == 1)
+                    {
+                        state = 235;
+                    }
+                    else
+                    {
+                        currentSong = songList.get(option - 2);
+                        songList = null;
+                        state = 141 + offset;
+                    }
+                    break;      // case 211
+
+                case 141:
+                    if (currentSong == null)
+                    {
+                        System.out.println("Something impossible found: song not found!");
+                        return;
+                    }
+                    currentSong.displaySongInfo();
+                    System.out.print("Do you want to play this song? (y/n): ");
+                    opt = in.next().charAt(0);
+                    if (opt == 'Y' || opt == 'y')
+                        currentSong.play();
+
+                    state = 131;
+                    break;
+
+                case 241:
+                    if (currentSong == null)
+                    {
+                        System.out.println("Something impossible found: song not found!");
+                        return;
+                    }
+                    currentSong.displaySongInfo();
+
+                    if (repoLibrary.checkIfInLibrary(currentUser, currentSong))
+                        System.out.println("\nThis song is in your library!");
+                    else {
+                        System.out.print("\nDo you want to add this song to your library? (y/n):");
+                        opt = in.next().charAt(0);
+                        if (opt == 'y' || opt == 'Y') {
+                            if (repoLibrary.createRecord(new Library(currentSong, currentUser)))
+                                System.out.println("Successfully added song to the library!");
+                            else
+                                System.out.println("Failed to add song to the library!");
+                        }
+                    }
+                    state = 231;
+                    break;
+
+                default:
+                    System.out.println("Not implemented!");
+                    state = 1;
+                    break;
+            }
+        }
     }
 
     public static void adminMenu() {
@@ -231,6 +523,24 @@ public class MusicMenu {
                 }
                 break;
             case 2:         // Set User Role
+                int userCount = repoUser.countUsersTotal();
+                if (userCount == -1) {
+                    System.out.println("Failed to get user count!");
+                    return;
+                }
+                System.out.println("There are total " + userCount + " users in the system");
+
+                for (UserRole userRole : userRoles)
+                {
+                    userCount = repoUser.countUsersByRole(userRole);
+                    if (userCount == -1)
+                    {
+                        System.out.println("Failed to get user count!");
+                        return;
+                    }
+                    System.out.println(userCount + " users in the group " + userRole.getRoleName());
+                }
+
                 userList = repoUser.listAllUsers();
                 if (userList == null)
                 {

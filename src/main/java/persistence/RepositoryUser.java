@@ -84,13 +84,42 @@ public class RepositoryUser {
             return entityManager
                     .createQuery("FROM User WHERE userName = :rName", User.class)
                     .setParameter("rName", name)
-                    .getResultList()
-                    .get(0);
+                    .getSingleResult();
         }
         catch (Exception e)
         {
             return null;
         }
+    }
+
+    public int countUsersTotal()
+    {
+        try
+        {
+            return (int)entityManager
+                    .createQuery("SELECT COUNT(*) FROM User")
+                    .getSingleResult();
+        }
+        catch (Exception e)
+        {
+            return -1;
+        }
+    }
+
+    public int countUsersByRole(UserRole userRole)
+    {
+        try
+        {
+            return (int)entityManager
+                    .createQuery("SELECT COUNT(*) FROM User WHERE userRole = :uRole")
+                    .setParameter("uRole", userRole)
+                    .getSingleResult();
+        }
+        catch (Exception e)
+        {
+            return -1;
+        }
+
     }
 
     public User findUserById(int id)
