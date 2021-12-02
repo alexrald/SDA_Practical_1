@@ -15,6 +15,7 @@ public class MusicMenu {
     static RepositoryAlbum          repoAlbum;
     static RepositorySong           repoSong;
     static RepositoryLibrary        repoLibrary;
+    static RepositorySubscription   repoSubs;
 
     // User Roles
     static List<UserRole>           userRoles;
@@ -119,6 +120,14 @@ public class MusicMenu {
                     "Set User Role"
             };
 
+    static String []                menuManageSubs =
+            {
+                    "Subscription options",
+                    "Return to Music Menu",
+                    "Subscribe to a new artist",
+                    "Delete a subscription"
+            };
+
     static List<UserRole>           defUserRoles = Arrays.asList(
             new UserRole("Administrator", true, true),
             new UserRole("Contributor", false, true),
@@ -142,6 +151,7 @@ public class MusicMenu {
         repoAlbum =     new RepositoryAlbum();
         repoSong =      new RepositorySong();
         repoLibrary =   new RepositoryLibrary();
+        repoSubs =      new RepositorySubscription();
 
         // Load all user roles
         System.out.println("Loading user roles...");
@@ -244,6 +254,8 @@ public class MusicMenu {
         Album currentAlbum = null;
         Song currentSong = null;
 
+        List<Subscription> subsList = null;
+
         while (true)
         {
             switch (state)
@@ -265,6 +277,12 @@ public class MusicMenu {
                         case 3:     // Add New Song
                             state = 101;
                             offset = 100;
+                            break;
+                        case 4:      // Check for updates
+                            state = 20;
+                            break;
+                        case 5:      // Manage Subscriptions
+                            state = 30;
                             break;
                         default:
                             System.out.println("Not implemented yet!");
@@ -288,6 +306,106 @@ public class MusicMenu {
                         cSong.displaySongInfo();
                     }
                     break;
+
+                case 20:        // Display subscriptions
+                    state = 1;
+                    artistList = repoSubs.listUpdatedArtists(currentUser);
+                    if (artistList == null) {
+                        System.out.println("\nFailed to retrieve updated artists!");
+                        break;
+                    }
+                    if (artistList.size() == 0) {
+                        System.out.println("\nNo artists have been updated!\n");
+                        break;
+                    }
+                    System.out.printf("\n%d artists have been updated!\n", artistList.size());
+                    for (Artist artist: artistList)
+                    {
+                        System.out.println(artist.getArtistName());
+                    }
+                    System.out.print("\nDo you wish to clear the update notifications? (y/n): ");
+                    opt = in.next().charAt(0);
+                    if (opt == 'Y' || opt == 'y')
+                        if (repoSubs.clearUpdateForUser(currentUser))
+                            System.out.println("Notification list cleared!");
+                        else
+                            System.out.println("Failed to clear notification list!");
+                    break;
+
+                case 30:        // Manage Subscriptions
+                    subsList = repoSubs.listUserRecords(currentUser);
+                    if (subsList == null)
+                    {
+                        System.out.println("Failed to get subscription list!");
+                        break;
+                    }
+
+                    if (subsList.size() == 0)
+                        System.out.println("You are not subscribed to any artist!");
+                    else {
+                        System.out.println("\n\nYou are subscribed to following artists:\n");
+
+                        for (Subscription sub : subsList) {
+                            System.out.println(sub.getArtist().getArtistName());
+                        }
+                    }
+
+                    option = callMenu(menuManageSubs, 0);
+                    switch (option)
+                    {
+                        case 0:         // Return
+                            state = 1;
+                            break;
+                        case 1:         // Add New
+                            state = 31;
+                            break;
+                        case 2:         // Delete
+                            state = 36;
+                            break;
+                    }
+                    break;
+
+                case 31:            // Add new subscription
+                    artistList = repoSubs.listNotSubscribedArtistsForUser(currentUser);
+                    if (artistList == null)
+                    {
+                        System.out.println("Failed to get artist list!");
+                        state = 30;
+                        break;
+                    }
+                    if (artistList.size() == 0)
+                    {
+                        System.out.println("You are subscribed to all available artists!");
+                        state = 30;
+                        break;
+                    }
+                    contentBuf = new String[artistList.size() + 2];
+                    contentBuf[0] = "=== You can subscribe to the following artists: ===";
+                    contentBuf[1] = "[Return to Subscription Management]";
+                    for (int i = 0; i < artistList.size(); i++)
+                    {
+                        contentBuf[i + 2] = "Artist **" + artistList.get(i).getArtistName() + "**";
+                    }
+                    option = callMenu(contentBuf, 0);
+
+                    if (option == 0) {
+                        state = 30;
+                        break;
+                    }
+                    else
+                    {
+                        currentArtist = artistList.get(option - 1);
+                        artistList = null;
+                        repoSubs.createRecord(new Subscription(currentUser, currentArtist));
+                        state = 31;
+                    }
+                    break;
+
+                case 36:
+                    System.out.println("Not implemented!");
+                    state = 30;
+                    break;
+
 
                 case 101:       // Music Selection
                     option = callMenu(musicSelect, 0);
@@ -1122,6 +1240,12 @@ public class MusicMenu {
                         System.out.println("Failed to create/update the song!");
                         return;
                     }
+
+                    // Set notification to all users that the artist has been updated
+                    if (repoSubs.setUpdateForArtist(currentSong.getAlbum().getArtist()))
+                        System.out.println("Update notification sent!");
+                    else
+                        System.out.println("Failed to send update notification!");
 
                     // Check if the user wants to add another song
                     System.out.print("Do you want to add a new song to this album? (y/n): ");
