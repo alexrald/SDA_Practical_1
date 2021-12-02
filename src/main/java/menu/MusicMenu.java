@@ -256,8 +256,7 @@ public class MusicMenu {
                         case 0:     // Return
                             return;
                         case 1:     // Display Library
-
-                            state = 1;
+                            state = 10;
                             break;
                         case 2:     // Browse Library
                             state = 101;
@@ -272,6 +271,23 @@ public class MusicMenu {
                             break;
                     }
                     break;      // case 1
+
+                case 10:        // Display Library
+                    state = 1;
+                    int iSongCount = repoLibrary.countForUser(currentUser);
+                    int iArtistCount = repoLibrary.countByArtistForUser(currentUser);
+                    if (iSongCount < 0 || iArtistCount < 0)
+                    {
+                        System.out.println("Failed to get song count!");
+                        break;
+                    }
+                    System.out.printf("\n\nYou have %d songs in total by %d different artists.\n\n", iSongCount, iArtistCount);
+                    songList = repoLibrary.getAllSongs(currentUser);
+                    for (Song cSong: songList)
+                    {
+                        cSong.displaySongInfo();
+                    }
+                    break;
 
                 case 101:       // Music Selection
                     option = callMenu(musicSelect, 0);
@@ -462,7 +478,7 @@ public class MusicMenu {
                 case 141:
                     if (currentSong == null)
                     {
-                        System.out.println("Something impossible found: song not found!");
+                        System.out.println("Something impossible happened: song not found!");
                         return;
                     }
                     currentSong.displaySongInfo();
@@ -477,7 +493,7 @@ public class MusicMenu {
                 case 241:
                     if (currentSong == null)
                     {
-                        System.out.println("Something impossible found: song not found!");
+                        System.out.println("Something impossible happened: song not found!");
                         return;
                     }
                     currentSong.displaySongInfo();
@@ -510,12 +526,19 @@ public class MusicMenu {
         List<User>  userList;
         String[]    userNames;
         User        userToEdit;
+        int         userCount;
 
         switch (option) {
             case 0:         // Return to main menu
                 currentState = 1;
                 break;
             case 1:         // Display all users
+                userCount = repoUser.countUsersTotal();
+                if (userCount == -1) {
+                    System.out.println("Failed to get user count!");
+                    return;
+                }
+                System.out.println("There are total " + userCount + " users in the system");
                 userList = repoUser.listAllUsers();
                 for (User user: userList)
                 {
@@ -524,7 +547,7 @@ public class MusicMenu {
                 }
                 break;
             case 2:         // Set User Role
-                int userCount = repoUser.countUsersTotal();
+                userCount = repoUser.countUsersTotal();
                 if (userCount == -1) {
                     System.out.println("Failed to get user count!");
                     return;
@@ -1270,7 +1293,7 @@ public class MusicMenu {
         if (name.length() < min || name.length() > max)
             return false;
 
-        Pattern pattern = Pattern.compile("[^a-zA-Z ]");
+        Pattern pattern = Pattern.compile("[^a-zA-Z ']");
         return !pattern.matcher(name).find();
     }
 

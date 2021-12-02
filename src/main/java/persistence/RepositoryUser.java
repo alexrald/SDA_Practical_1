@@ -96,12 +96,14 @@ public class RepositoryUser {
     {
         try
         {
-            return (int)entityManager
-                    .createQuery("SELECT COUNT(*) FROM User")
-                    .getSingleResult();
+            return entityManager
+                    .createQuery("SELECT COUNT(*) FROM User", Long.class)
+                    .getSingleResult()
+                    .intValue();
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             return -1;
         }
     }
@@ -110,13 +112,15 @@ public class RepositoryUser {
     {
         try
         {
-            return (int)entityManager
-                    .createQuery("SELECT COUNT(*) FROM User WHERE userRole = :uRole")
+            return entityManager
+                    .createQuery("SELECT COUNT(*) FROM User WHERE userRole = :uRole", Long.class)
                     .setParameter("uRole", userRole)
-                    .getSingleResult();
+                    .getSingleResult()
+                    .intValue();
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             return -1;
         }
 

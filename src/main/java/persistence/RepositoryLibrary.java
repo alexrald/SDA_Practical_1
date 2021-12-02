@@ -190,6 +190,38 @@ public class RepositoryLibrary {
         }
     }
 
+    public int countForUser(User user)
+    {
+        try
+        {
+            return entityManager
+                    .createQuery("SELECT COUNT(*) FROM Library WHERE user = :oUser", Long.class)
+                    .setParameter("oUser", user)
+                    .getSingleResult()
+                    .intValue();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
 
+    public int countByArtistForUser(User user)
+    {
+        try
+        {
+            return entityManager
+                    .createQuery("SELECT COUNT(DISTINCT Artist) FROM Library WHERE user = :oUser", Long.class)
+                    .setParameter("oUser", user)
+                    .getSingleResult()
+                    .intValue();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
 
 }
