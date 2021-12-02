@@ -396,7 +396,11 @@ public class MusicMenu {
                     {
                         currentArtist = artistList.get(option - 1);
                         artistList = null;
-                        repoSubs.createRecord(new Subscription(currentUser, currentArtist));
+                        if (repoSubs.createRecord(new Subscription(currentUser, currentArtist)))
+                            System.out.printf("You have subscribed to %s and will receive notifications when a new song by this artist is added!", currentArtist.getArtistName());
+                        else
+                            System.out.println("Failed to subscribe!");
+
                         state = 31;
                     }
                     break;

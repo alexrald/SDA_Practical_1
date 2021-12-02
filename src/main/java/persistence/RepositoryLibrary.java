@@ -212,7 +212,7 @@ public class RepositoryLibrary {
         try
         {
             return entityManager
-                    .createQuery("SELECT COUNT(DISTINCT Artist) FROM Library WHERE user = :oUser", Long.class)
+                    .createQuery("SELECT COUNT(DISTINCT artist) FROM Library WHERE user = :oUser", Long.class)
                     .setParameter("oUser", user)
                     .getSingleResult()
                     .intValue();
